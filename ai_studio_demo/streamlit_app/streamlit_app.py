@@ -1,3 +1,5 @@
+# AI Function Studio Demo - Streamlit multi-page app for support ticket classification
+# Co-authored with CoCo
 import streamlit as st
 
 st.set_page_config(

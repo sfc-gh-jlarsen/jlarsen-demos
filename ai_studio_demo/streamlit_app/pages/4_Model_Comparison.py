@@ -1,10 +1,12 @@
+# Model Comparison page for AI Function Studio Demo
+# Co-authored with CoCo
 import streamlit as st
 import pandas as pd
-from snowflake.snowpark.context import get_active_session
+import os
 
 st.set_page_config(page_title="Model Comparison", page_icon="⚖️", layout="wide")
 
-session = get_active_session()
+session = st.connection("snowflake", ttl=os.getenv("SNOWFLAKE_CONNECTION_TTL")).session()
 
 st.header("Model Comparison & RBAC")
 

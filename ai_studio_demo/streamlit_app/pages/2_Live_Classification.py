@@ -1,10 +1,12 @@
+# Live Classification page for AI Function Studio Demo
+# Co-authored with CoCo
 import streamlit as st
 import json
-from snowflake.snowpark.context import get_active_session
+import os
 
 st.set_page_config(page_title="Live Classification", page_icon="🎯", layout="wide")
 
-session = get_active_session()
+session = st.connection("snowflake", ttl=os.getenv("SNOWFLAKE_CONNECTION_TTL")).session()
 
 st.header("Live Ticket Classification")
 
@@ -125,7 +127,7 @@ if st.button("Classify All Sample Tickets"):
     with st.spinner("Running classification on all 15 tickets..."):
         session.sql("""
             INSERT INTO AI_STUDIO_DEMO.PUBLIC.ROUTED_TICKETS (TICKET_ID, TICKET_TEXT, CLASSIFICATION)
-            SELECT TICKET_ID, TICKET_TEXT, CLASSIFY_SUPPORT_TICKET_V2(TICKET_TEXT)
+            SELECT TICKET_ID, TICKET_TEXT, AI_STUDIO_DEMO.PUBLIC.CLASSIFY_SUPPORT_TICKET_V2(TICKET_TEXT)
             FROM AI_STUDIO_DEMO.PUBLIC.SUPPORT_TICKETS
         """).collect()
     st.success("All tickets classified and stored in ROUTED_TICKETS.")
