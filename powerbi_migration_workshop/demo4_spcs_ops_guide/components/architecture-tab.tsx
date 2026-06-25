@@ -49,6 +49,15 @@ export function ArchitectureTab() {
       </div>
 
       <h3 className="text-lg font-medium mt-6">Instance Family Reference</h3>
+      <div className="border-l-4 border-amber-500 bg-amber-50 dark:bg-amber-950/20 p-3 rounded mb-4">
+        <p className="text-sm text-amber-800 dark:text-amber-400">
+          Credit rates shown are approximate. The{" "}
+          <a href="https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf" className="underline font-medium" target="_blank" rel="noopener noreferrer">
+            Snowflake Consumption Table
+          </a>{" "}
+          is the authoritative source of truth on credit consumption rates.
+        </p>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border">
           <thead className="bg-muted">

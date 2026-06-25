@@ -4,14 +4,12 @@ import { useState } from "react"
 import { ArchitectureTab } from "@/components/architecture-tab"
 import { ScalingTab } from "@/components/scaling-tab"
 import { MonitoringTab } from "@/components/monitoring-tab"
-import { CostTab } from "@/components/cost-tab"
 import { RuntimeComparisonTab } from "@/components/runtime-comparison-tab"
 
 const TABS = [
   { id: "architecture", label: "Architecture" },
   { id: "scaling", label: "Scaling & Warm Pools" },
   { id: "monitoring", label: "Monitoring & Logging" },
-  { id: "cost", label: "Cost Estimator" },
   { id: "runtime", label: "Container vs Warehouse" },
 ]
 
@@ -39,7 +37,6 @@ export function TabNav() {
         {active === "architecture" && <ArchitectureTab />}
         {active === "scaling" && <ScalingTab />}
         {active === "monitoring" && <MonitoringTab />}
-        {active === "cost" && <CostTab />}
         {active === "runtime" && <RuntimeComparisonTab />}
       </div>
     </div>
