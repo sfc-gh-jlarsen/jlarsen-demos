@@ -8,39 +8,51 @@ Runtime: Container (Workspaces — private, ephemeral)
 Persona: Tactical Scheduler
 """
 
-import sys
-from pathlib import Path
 from datetime import datetime, timedelta
 
+import plotly.express as px
 import streamlit as st
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from data.synthetic_data import LINES, get_material_availability, get_work_orders
 
 st.set_page_config(page_title="Material Availability Check", layout="wide")
 st.title("Material Availability Check")
 
+conn = st.connection("snowflake")
+
 # --- Sidebar Filters ---
+lines_df = conn.query(
+    "SELECT DISTINCT PRODUCTION_LINE FROM MFG_SCHEDULING_REPORTING.RAW.WORK_ORDERS ORDER BY 1"
+)
+all_lines = lines_df["PRODUCTION_LINE"].tolist()
+
 with st.sidebar:
     st.header("Filters")
     next_monday = datetime.now() + timedelta(days=(7 - datetime.now().weekday()) % 7)
     target_date = st.date_input("Production Date", value=next_monday)
-    selected_lines = st.multiselect("Production Lines", LINES, default=LINES[:3])
+    selected_lines = st.multiselect("Production Lines", all_lines, default=all_lines[:3])
 
 # --- Load Data ---
-wo_df = get_work_orders(target_date=datetime.combine(target_date, datetime.min.time()))
-mat_df = get_material_availability()
+wo_df = conn.query(f"""
+    SELECT WO_ID, PRODUCT_NAME, PRODUCTION_LINE, QUANTITY, DUE_DATE, STATUS, MATERIAL_STATUS
+    FROM MFG_SCHEDULING_REPORTING.RAW.WORK_ORDERS
+    WHERE DUE_DATE BETWEEN DATEADD(day, -2, '{target_date}') AND DATEADD(day, 5, '{target_date}')
+""")
+
+mat_df = conn.query("""
+    SELECT MATERIAL_NAME, QTY_REQUIRED, QTY_ON_HAND, QTY_SHORT,
+           EXPECTED_RESOLUTION, IMPACT_SEVERITY, AFFECTED_WO
+    FROM MFG_SCHEDULING_REPORTING.RAW.MATERIALS
+""")
 
 # Filter work orders by selected lines
-wo_filtered = wo_df[wo_df["production_line"].isin(selected_lines)]
+wo_filtered = wo_df[wo_df["PRODUCTION_LINE"].isin(selected_lines)]
 
 # --- KPI Row ---
 total_wos = len(wo_filtered)
 materials_available_pct = (
-    len(mat_df[mat_df["qty_short"] == 0]) / len(mat_df) * 100 if len(mat_df) > 0 else 0
+    len(mat_df[mat_df["QTY_SHORT"] == 0]) / len(mat_df) * 100 if len(mat_df) > 0 else 0
 )
-at_risk = len(wo_filtered[wo_filtered["material_status"] != "Available"])
-shortage_count = len(mat_df[mat_df["qty_short"] > 0])
+at_risk = len(wo_filtered[wo_filtered["MATERIAL_STATUS"] != "Available"])
+shortage_count = len(mat_df[mat_df["QTY_SHORT"] > 0])
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Scheduled Work Orders", total_wos)
@@ -55,28 +67,28 @@ st.subheader(f"Work Orders — {target_date.strftime('%A, %B %d')}")
 
 STATUS_ICONS = {"Available": "🟢", "Partial": "🟡", "Shortage": "🔴"}
 wo_display = wo_filtered.copy()
-wo_display["material_status"] = wo_display["material_status"].map(
+wo_display["MATERIAL_STATUS"] = wo_display["MATERIAL_STATUS"].map(
     lambda s: f"{STATUS_ICONS.get(s, '')} {s}"
 )
 st.dataframe(
-    wo_display[["wo_id", "product", "production_line", "quantity", "due_date", "status", "material_status"]],
+    wo_display[["WO_ID", "PRODUCT_NAME", "PRODUCTION_LINE", "QUANTITY", "DUE_DATE", "STATUS", "MATERIAL_STATUS"]],
     use_container_width=True,
     hide_index=True,
     column_config={
-        "wo_id": "WO ID",
-        "product": "Product",
-        "production_line": "Line",
-        "quantity": "Qty",
-        "due_date": "Due Date",
-        "status": "Status",
-        "material_status": "Material",
+        "WO_ID": "WO ID",
+        "PRODUCT_NAME": "Product",
+        "PRODUCTION_LINE": "Line",
+        "QUANTITY": "Qty",
+        "DUE_DATE": "Due Date",
+        "STATUS": "Status",
+        "MATERIAL_STATUS": "Material",
     },
 )
 
 # --- Material Shortages ---
 st.subheader("Material Shortages")
-shortages = mat_df[mat_df["qty_short"] > 0][
-    ["material", "qty_short", "expected_resolution", "impact_severity", "affected_wo"]
+shortages = mat_df[mat_df["QTY_SHORT"] > 0][
+    ["MATERIAL_NAME", "QTY_SHORT", "EXPECTED_RESOLUTION", "IMPACT_SEVERITY", "AFFECTED_WO"]
 ]
 if shortages.empty:
     st.success("No material shortages detected.")
@@ -86,31 +98,28 @@ else:
         use_container_width=True,
         hide_index=True,
         column_config={
-            "material": "Material",
-            "qty_short": "Qty Short",
-            "expected_resolution": "Expected Resolution",
-            "impact_severity": "Severity",
-            "affected_wo": "Affected WO",
+            "MATERIAL_NAME": "Material",
+            "QTY_SHORT": "Qty Short",
+            "EXPECTED_RESOLUTION": "Expected Resolution",
+            "IMPACT_SEVERITY": "Severity",
+            "AFFECTED_WO": "Affected WO",
         },
     )
 
 # --- Bar Chart: Material Availability by Line ---
 st.subheader("Material Availability by Production Line")
-import pandas as pd
 
 line_availability = (
-    wo_filtered.groupby("production_line")["material_status"]
-    .apply(lambda x: (x == "Available").sum() / len(x) * 100)
+    wo_filtered.groupby("PRODUCTION_LINE")["MATERIAL_STATUS"]
+    .apply(lambda x: (x.str.contains("Available")).sum() / len(x) * 100)
     .reset_index()
 )
-line_availability.columns = ["production_line", "availability_pct"]
-
-import plotly.express as px
+line_availability.columns = ["PRODUCTION_LINE", "availability_pct"]
 
 fig = px.bar(
     line_availability.sort_values("availability_pct"),
     x="availability_pct",
-    y="production_line",
+    y="PRODUCTION_LINE",
     orientation="h",
     color="availability_pct",
     color_continuous_scale=["#F44336", "#FF9800", "#4CAF50"],

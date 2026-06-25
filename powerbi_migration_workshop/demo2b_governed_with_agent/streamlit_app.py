@@ -8,23 +8,7 @@ Runtime: Container (Deployed)
 Persona: Plant Manager
 """
 
-import sys
-from pathlib import Path
-
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from data.synthetic_data import (
-    get_changeover_history,
-    get_delivery_data,
-    get_issues,
-    get_line_utilization,
-    get_oee_data,
-    get_on_time_delivery_trend,
-)
 
 # --- Page Config ---
 st.set_page_config(page_title="Plant Performance Dashboard", layout="wide")
