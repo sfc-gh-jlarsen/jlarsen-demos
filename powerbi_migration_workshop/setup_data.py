@@ -28,8 +28,10 @@ DATABASE = "MFG_SCHEDULING_REPORTING"
 
 
 def main():
-    print("Connecting to Snowflake...")
-    conn = snowflake.connector.connect(connection_name="default")
+    import os
+    connection_name = os.environ.get("SNOWFLAKE_CONNECTION_NAME", "default")
+    print(f"Connecting to Snowflake (connection: {connection_name})...")
+    conn = snowflake.connector.connect(connection_name=connection_name)
     conn.cursor().execute(f"USE DATABASE {DATABASE}")
     conn.cursor().execute("USE WAREHOUSE COMPUTE_WH")
 
