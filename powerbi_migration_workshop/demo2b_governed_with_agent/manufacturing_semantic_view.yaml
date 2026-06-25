@@ -1,0 +1,117 @@
+name: manufacturing_operations
+description: "Governed metrics for manufacturing plant performance — replaces fragmented PowerBI semantic models with a single source of truth."
+
+tables:
+  - name: daily_production_metrics
+    base_table: MFG_SCHEDULING_REPORTING.ANALYTICS.DAILY_PRODUCTION_METRICS
+    description: "Daily production metrics aggregated by line, plant, and shift"
+    dimensions:
+      - name: plant_id
+        expr: PLANT_ID
+        description: "Plant identifier code"
+      - name: plant_name
+        expr: PLANT_NAME
+        description: "Full plant name"
+      - name: production_line
+        expr: LINE_NAME
+        description: "Production line name"
+      - name: product_name
+        expr: PRODUCT_NAME
+        description: "Product being manufactured"
+      - name: shift
+        expr: SHIFT_NAME
+        description: "Shift window (Day/Swing/Night)"
+    time_dimensions:
+      - name: production_date
+        expr: PRODUCTION_DATE
+        description: "Date of production"
+    measures:
+      - name: oee
+        expr: "AVG(AVAILABILITY_PCT * PERFORMANCE_PCT * QUALITY_PCT)"
+        description: "Overall Equipment Effectiveness = Availability x Performance x Quality"
+      - name: availability
+        expr: "AVG(AVAILABILITY_PCT)"
+        description: "Machine availability percentage"
+      - name: performance
+        expr: "AVG(PERFORMANCE_PCT)"
+        description: "Line performance rate percentage"
+      - name: quality
+        expr: "AVG(QUALITY_PCT)"
+        description: "First-pass quality yield percentage"
+      - name: on_time_delivery_pct
+        expr: "COUNT_IF(ACTUAL_SHIP_DATE <= PROMISE_DATE) / NULLIF(COUNT(*), 0) * 100"
+        description: "Percentage of orders shipped on or before promise date"
+      - name: throughput
+        expr: "SUM(GOOD_UNITS_PRODUCED)"
+        description: "Total good units produced"
+      - name: scrap_rate
+        expr: "SUM(SCRAPPED_UNITS) / NULLIF(SUM(TOTAL_UNITS_PRODUCED), 0) * 100"
+        description: "Percentage of units scrapped"
+      - name: total_downtime_minutes
+        expr: "SUM(DOWNTIME_MINUTES)"
+        description: "Total unplanned downtime in minutes"
+
+  - name: work_orders
+    base_table: MFG_SCHEDULING_REPORTING.RAW.WORK_ORDERS
+    description: "Production work orders with scheduling and material status"
+    dimensions:
+      - name: wo_id
+        expr: WO_ID
+        description: "Work order identifier"
+      - name: product
+        expr: PRODUCT_NAME
+        description: "Product being produced"
+      - name: production_line
+        expr: PRODUCTION_LINE
+        description: "Assigned production line"
+      - name: status
+        expr: STATUS
+        description: "Work order status (Scheduled, In Progress, Complete, At Risk, Material Hold)"
+      - name: material_status
+        expr: MATERIAL_STATUS
+        description: "Material readiness (Available, Partial, Shortage)"
+    time_dimensions:
+      - name: due_date
+        expr: DUE_DATE
+        description: "Work order due date"
+    measures:
+      - name: order_count
+        expr: "COUNT(*)"
+        description: "Number of work orders"
+      - name: total_quantity
+        expr: "SUM(QUANTITY)"
+        description: "Total units ordered"
+      - name: at_risk_count
+        expr: "COUNT_IF(STATUS = 'At Risk' OR MATERIAL_STATUS = 'Shortage')"
+        description: "Orders at risk due to status or material shortage"
+
+  - name: issues
+    base_table: MFG_SCHEDULING_REPORTING.RAW.ISSUES
+    description: "Production issues and incidents"
+    dimensions:
+      - name: issue_id
+        expr: ISSUE_ID
+        description: "Issue identifier"
+      - name: production_line
+        expr: PRODUCTION_LINE
+        description: "Affected production line"
+      - name: issue_type
+        expr: ISSUE_TYPE
+        description: "Category (Machine Breakdown, Quality Hold, Material Delay, Staffing Gap)"
+      - name: severity
+        expr: SEVERITY
+        description: "Issue severity (High, Medium, Low)"
+      - name: issue_status
+        expr: STATUS
+        description: "Current status (Open, Resolved)"
+    time_dimensions:
+      - name: created_at
+        expr: CREATED_AT
+        description: "When the issue was reported"
+    measures:
+      - name: open_issue_count
+        expr: "COUNT_IF(STATUS = 'Open')"
+        description: "Number of currently open issues"
+      - name: avg_resolution_hours
+        expr: "AVG(DATEDIFF(hour, CREATED_AT, RESOLVED_AT))"
+        description: "Average time to resolve issues in hours"

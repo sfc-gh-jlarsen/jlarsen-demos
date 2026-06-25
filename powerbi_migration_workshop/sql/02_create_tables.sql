@@ -1,0 +1,81 @@
+-- ============================================================
+-- 02: Table DDL
+-- ============================================================
+
+USE DATABASE MFG_SCHEDULING_REPORTING;
+
+-- Daily production metrics (primary analytics table)
+CREATE OR REPLACE TABLE RAW.DAILY_PRODUCTION_METRICS (
+    PRODUCTION_DATE   DATE,
+    PLANT_ID          VARCHAR(10),
+    PLANT_NAME        VARCHAR(100),
+    LINE_NAME         VARCHAR(100),
+    PRODUCT_NAME      VARCHAR(100),
+    SHIFT_NAME        VARCHAR(50),
+    AVAILABILITY_PCT  FLOAT,
+    PERFORMANCE_PCT   FLOAT,
+    QUALITY_PCT       FLOAT,
+    GOOD_UNITS_PRODUCED    INT,
+    TOTAL_UNITS_PRODUCED   INT,
+    SCRAPPED_UNITS         INT,
+    DOWNTIME_MINUTES       INT
+);
+
+-- Work orders
+CREATE OR REPLACE TABLE RAW.WORK_ORDERS (
+    WO_ID             VARCHAR(20),
+    PRODUCT_NAME      VARCHAR(100),
+    PRODUCTION_LINE   VARCHAR(100),
+    QUANTITY          INT,
+    DUE_DATE          DATE,
+    STATUS            VARCHAR(30),
+    MATERIAL_STATUS   VARCHAR(30),
+    PLANT_ID          VARCHAR(10)
+);
+
+-- Materials inventory
+CREATE OR REPLACE TABLE RAW.MATERIALS (
+    MATERIAL_NAME         VARCHAR(100),
+    QTY_REQUIRED          INT,
+    QTY_ON_HAND           INT,
+    QTY_SHORT             INT,
+    EXPECTED_RESOLUTION   DATE,
+    IMPACT_SEVERITY       VARCHAR(20),
+    AFFECTED_WO           VARCHAR(20)
+);
+
+-- Issues / incidents
+CREATE OR REPLACE TABLE RAW.ISSUES (
+    ISSUE_ID          VARCHAR(20),
+    PRODUCTION_LINE   VARCHAR(100),
+    ISSUE_TYPE        VARCHAR(50),
+    DESCRIPTION       VARCHAR(500),
+    SEVERITY          VARCHAR(20),
+    STATUS            VARCHAR(20),
+    CREATED_AT        TIMESTAMP,
+    RESOLVED_AT       TIMESTAMP,
+    PLANT_ID          VARCHAR(10)
+);
+
+-- Delivery commitments
+CREATE OR REPLACE TABLE RAW.DELIVERIES (
+    WO_ID             VARCHAR(20),
+    PRODUCT_NAME      VARCHAR(100),
+    PROMISE_DATE      DATE,
+    ESTIMATED_SHIP    DATE,
+    ON_TIME           BOOLEAN,
+    RISK_REASON       VARCHAR(100),
+    PLANT_ID          VARCHAR(10)
+);
+
+-- User-plant assignment (for caller's rights demo)
+CREATE OR REPLACE TABLE ADMIN.USER_PLANT_ASSIGNMENTS (
+    USER_EMAIL  VARCHAR(200),
+    PLANT_ID    VARCHAR(10)
+);
+
+-- Analytics view (consumed by apps)
+CREATE OR REPLACE VIEW ANALYTICS.DAILY_PRODUCTION_METRICS AS
+SELECT *,
+       AVAILABILITY_PCT * PERFORMANCE_PCT * QUALITY_PCT AS OEE
+FROM RAW.DAILY_PRODUCTION_METRICS;
