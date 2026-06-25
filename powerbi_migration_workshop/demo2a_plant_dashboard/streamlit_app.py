@@ -13,6 +13,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+# --- Configuration ---
+DATABASE = "MFG_SCHEDULING_REPORTING"
+SCHEMA_RAW = f"{DATABASE}.RAW"
+PLANT_ID = "DET01"
+
 st.set_page_config(page_title="Plant Performance Dashboard", layout="wide")
 
 conn = st.connection("snowflake")
@@ -28,49 +33,64 @@ if page == "Plant Overview":
 
     # Direct SQL — OEE formula is hardcoded here.
     # NOTE: What if Austin defines OEE differently? That's why Semantic Views exist.
-    oee_df = conn.query("""
+    oee_df = conn.query(
+        f"""
         SELECT PRODUCTION_DATE AS date, LINE_NAME AS production_line,
                AVAILABILITY_PCT, PERFORMANCE_PCT, QUALITY_PCT,
                AVAILABILITY_PCT * PERFORMANCE_PCT * QUALITY_PCT AS oee,
                GOOD_UNITS_PRODUCED AS good_units, SCRAPPED_UNITS AS scrap_units,
                DOWNTIME_MINUTES
-        FROM MFG_SCHEDULING_REPORTING.RAW.DAILY_PRODUCTION_METRICS
-        WHERE PLANT_ID = 'DET01'
+        FROM {SCHEMA_RAW}.DAILY_PRODUCTION_METRICS
+        WHERE PLANT_ID = :1
           AND PRODUCTION_DATE >= DATEADD(week, -8, CURRENT_DATE())
         ORDER BY PRODUCTION_DATE
-    """)
+        """,
+        params=[PLANT_ID],
+    )
 
-    otd_df = conn.query("""
+    otd_df = conn.query(
+        f"""
         SELECT DATE_TRUNC('week', PROMISE_DATE) AS week_start,
                COUNT_IF(ON_TIME) / NULLIF(COUNT(*), 0) * 100 AS on_time_delivery_pct
-        FROM MFG_SCHEDULING_REPORTING.RAW.DELIVERIES
-        WHERE PLANT_ID = 'DET01'
+        FROM {SCHEMA_RAW}.DELIVERIES
+        WHERE PLANT_ID = :1
         GROUP BY 1 ORDER BY 1
-    """)
+        """,
+        params=[PLANT_ID],
+    )
 
-    delivery_df = conn.query("""
+    delivery_df = conn.query(
+        f"""
         SELECT WO_ID, PRODUCT_NAME AS product, PROMISE_DATE,
                DATEDIFF(day, CURRENT_DATE(), PROMISE_DATE) AS days_until_due,
                RISK_REASON, ON_TIME
-        FROM MFG_SCHEDULING_REPORTING.RAW.DELIVERIES
-        WHERE PLANT_ID = 'DET01'
-    """)
+        FROM {SCHEMA_RAW}.DELIVERIES
+        WHERE PLANT_ID = :1
+        """,
+        params=[PLANT_ID],
+    )
 
-    issues_df = conn.query("""
+    issues_df = conn.query(
+        f"""
         SELECT ISSUE_ID, PRODUCTION_LINE, ISSUE_TYPE AS type, DESCRIPTION,
                SEVERITY, STATUS, CREATED_AT, RESOLVED_AT
-        FROM MFG_SCHEDULING_REPORTING.RAW.ISSUES
-        WHERE PLANT_ID = 'DET01'
-    """)
+        FROM {SCHEMA_RAW}.ISSUES
+        WHERE PLANT_ID = :1
+        """,
+        params=[PLANT_ID],
+    )
 
-    util_df = conn.query("""
+    util_df = conn.query(
+        f"""
         SELECT LINE_NAME AS production_line,
                AVG(AVAILABILITY_PCT) * 100 AS utilization_pct
-        FROM MFG_SCHEDULING_REPORTING.RAW.DAILY_PRODUCTION_METRICS
-        WHERE PLANT_ID = 'DET01'
+        FROM {SCHEMA_RAW}.DAILY_PRODUCTION_METRICS
+        WHERE PLANT_ID = :1
           AND PRODUCTION_DATE >= DATEADD(day, -7, CURRENT_DATE())
         GROUP BY LINE_NAME
-    """)
+        """,
+        params=[PLANT_ID],
+    )
 
     # --- KPI Row ---
     latest_week = oee_df[oee_df["DATE"] >= oee_df["DATE"].max() - np.timedelta64(6, "D")]
@@ -168,21 +188,27 @@ if page == "Plant Overview":
 else:
     st.title("Production Line Drill Down")
 
-    lines = conn.query("""
-        SELECT DISTINCT LINE_NAME FROM MFG_SCHEDULING_REPORTING.RAW.DAILY_PRODUCTION_METRICS
-        WHERE PLANT_ID = 'DET01' ORDER BY 1
-    """)
+    lines = conn.query(
+        f"""
+        SELECT DISTINCT LINE_NAME FROM {SCHEMA_RAW}.DAILY_PRODUCTION_METRICS
+        WHERE PLANT_ID = :1 ORDER BY 1
+        """,
+        params=[PLANT_ID],
+    )
     selected_line = st.selectbox("Select Production Line", lines["LINE_NAME"].tolist())
 
     # Daily production
     st.subheader(f"Daily Production — {selected_line}")
-    line_data = conn.query(f"""
+    line_data = conn.query(
+        f"""
         SELECT PRODUCTION_DATE AS date, GOOD_UNITS_PRODUCED AS good_units, 150 AS target_units
-        FROM MFG_SCHEDULING_REPORTING.RAW.DAILY_PRODUCTION_METRICS
-        WHERE PLANT_ID = 'DET01' AND LINE_NAME = '{selected_line}'
+        FROM {SCHEMA_RAW}.DAILY_PRODUCTION_METRICS
+        WHERE PLANT_ID = :1 AND LINE_NAME = :2
           AND PRODUCTION_DATE >= DATEADD(day, -14, CURRENT_DATE())
         ORDER BY PRODUCTION_DATE
-    """)
+        """,
+        params=[PLANT_ID, selected_line],
+    )
     fig = px.bar(line_data, x="DATE", y="GOOD_UNITS", labels={"GOOD_UNITS": "Good Units"})
     fig.add_scatter(x=line_data["DATE"], y=line_data["TARGET_UNITS"],
                     mode="lines", name="Target", line=dict(color="red", dash="dash"))
@@ -191,13 +217,16 @@ else:
 
     # Issue log
     st.subheader(f"Issue Log (Last 7 Days) — {selected_line}")
-    line_issues = conn.query(f"""
+    line_issues = conn.query(
+        f"""
         SELECT ISSUE_ID, ISSUE_TYPE AS type, DESCRIPTION, SEVERITY, STATUS, CREATED_AT
-        FROM MFG_SCHEDULING_REPORTING.RAW.ISSUES
-        WHERE PLANT_ID = 'DET01' AND PRODUCTION_LINE = '{selected_line}'
+        FROM {SCHEMA_RAW}.ISSUES
+        WHERE PLANT_ID = :1 AND PRODUCTION_LINE = :2
           AND CREATED_AT >= DATEADD(day, -7, CURRENT_DATE())
         ORDER BY CREATED_AT DESC
-    """)
+        """,
+        params=[PLANT_ID, selected_line],
+    )
     if line_issues.empty:
         st.info("No issues recorded for this line in the last 7 days.")
     else:

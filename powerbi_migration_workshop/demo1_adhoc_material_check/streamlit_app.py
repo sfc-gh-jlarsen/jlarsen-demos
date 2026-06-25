@@ -13,6 +13,10 @@ from datetime import datetime, timedelta
 import plotly.express as px
 import streamlit as st
 
+# --- Configuration ---
+DATABASE = "MFG_SCHEDULING_REPORTING"
+SCHEMA_RAW = f"{DATABASE}.RAW"
+
 st.set_page_config(page_title="Material Availability Check", layout="wide")
 st.title("Material Availability Check")
 
@@ -20,7 +24,7 @@ conn = st.connection("snowflake")
 
 # --- Sidebar Filters ---
 lines_df = conn.query(
-    "SELECT DISTINCT PRODUCTION_LINE FROM MFG_SCHEDULING_REPORTING.RAW.WORK_ORDERS ORDER BY 1"
+    f"SELECT DISTINCT PRODUCTION_LINE FROM {SCHEMA_RAW}.WORK_ORDERS ORDER BY 1"
 )
 all_lines = lines_df["PRODUCTION_LINE"].tolist()
 
@@ -31,16 +35,19 @@ with st.sidebar:
     selected_lines = st.multiselect("Production Lines", all_lines, default=all_lines[:3])
 
 # --- Load Data ---
-wo_df = conn.query(f"""
+wo_df = conn.query(
+    f"""
     SELECT WO_ID, PRODUCT_NAME, PRODUCTION_LINE, QUANTITY, DUE_DATE, STATUS, MATERIAL_STATUS
-    FROM MFG_SCHEDULING_REPORTING.RAW.WORK_ORDERS
-    WHERE DUE_DATE BETWEEN DATEADD(day, -2, '{target_date}') AND DATEADD(day, 5, '{target_date}')
-""")
+    FROM {SCHEMA_RAW}.WORK_ORDERS
+    WHERE DUE_DATE BETWEEN DATEADD(day, -2, :1) AND DATEADD(day, 5, :1)
+    """,
+    params=[target_date.isoformat()],
+)
 
-mat_df = conn.query("""
+mat_df = conn.query(f"""
     SELECT MATERIAL_NAME, QTY_REQUIRED, QTY_ON_HAND, QTY_SHORT,
            EXPECTED_RESOLUTION, IMPACT_SEVERITY, AFFECTED_WO
-    FROM MFG_SCHEDULING_REPORTING.RAW.MATERIALS
+    FROM {SCHEMA_RAW}.MATERIALS
 """)
 
 # Filter work orders by selected lines

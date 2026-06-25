@@ -1,6 +1,6 @@
 """
 Plant Overview page — KPIs, OEE trends, delivery metrics, line utilization.
-Queries Snowflake via semantic view (or direct SQL with governed metric definitions).
+Queries the ANALYTICS schema (backed by semantic view).
 """
 
 import numpy as np
@@ -8,52 +8,73 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+# --- Configuration ---
+DATABASE = "MFG_SCHEDULING_REPORTING"
+SCHEMA_RAW = f"{DATABASE}.RAW"
+SCHEMA_ANALYTICS = f"{DATABASE}.ANALYTICS"
+PLANT_ID = "DET01"
+
 conn = st.connection("snowflake")
 
 st.title("Detroit Manufacturing Center — Performance Dashboard")
 
-# --- Load data via SQL (backed by semantic view in production) ---
-oee_df = conn.query("""
+# --- Load data ---
+oee_df = conn.query(
+    f"""
     SELECT PRODUCTION_DATE AS date, LINE_NAME AS production_line,
            AVAILABILITY_PCT, PERFORMANCE_PCT, QUALITY_PCT,
            OEE, GOOD_UNITS_PRODUCED AS good_units
-    FROM MFG_SCHEDULING_REPORTING.ANALYTICS.DAILY_PRODUCTION_METRICS
-    WHERE PLANT_ID = 'DET01'
+    FROM {SCHEMA_ANALYTICS}.DAILY_PRODUCTION_METRICS
+    WHERE PLANT_ID = :1
       AND PRODUCTION_DATE >= DATEADD(week, -8, CURRENT_DATE())
     ORDER BY PRODUCTION_DATE
-""")
+    """,
+    params=[PLANT_ID],
+)
 
-otd_df = conn.query("""
+otd_df = conn.query(
+    f"""
     SELECT DATE_TRUNC('week', PROMISE_DATE) AS week_start,
            COUNT_IF(ON_TIME) / NULLIF(COUNT(*), 0) * 100 AS on_time_delivery_pct
-    FROM MFG_SCHEDULING_REPORTING.RAW.DELIVERIES
-    WHERE PLANT_ID = 'DET01'
+    FROM {SCHEMA_RAW}.DELIVERIES
+    WHERE PLANT_ID = :1
     GROUP BY 1 ORDER BY 1
-""")
+    """,
+    params=[PLANT_ID],
+)
 
-delivery_df = conn.query("""
+delivery_df = conn.query(
+    f"""
     SELECT WO_ID, PRODUCT_NAME AS product, PROMISE_DATE,
            DATEDIFF(day, CURRENT_DATE(), PROMISE_DATE) AS days_until_due,
            RISK_REASON, ON_TIME
-    FROM MFG_SCHEDULING_REPORTING.RAW.DELIVERIES
-    WHERE PLANT_ID = 'DET01'
-""")
+    FROM {SCHEMA_RAW}.DELIVERIES
+    WHERE PLANT_ID = :1
+    """,
+    params=[PLANT_ID],
+)
 
-issues_df = conn.query("""
+issues_df = conn.query(
+    f"""
     SELECT ISSUE_ID, PRODUCTION_LINE, ISSUE_TYPE AS type,
            SEVERITY, STATUS, CREATED_AT
-    FROM MFG_SCHEDULING_REPORTING.RAW.ISSUES
-    WHERE PLANT_ID = 'DET01'
-""")
+    FROM {SCHEMA_RAW}.ISSUES
+    WHERE PLANT_ID = :1
+    """,
+    params=[PLANT_ID],
+)
 
-util_df = conn.query("""
+util_df = conn.query(
+    f"""
     SELECT LINE_NAME AS production_line,
            AVG(AVAILABILITY_PCT) * 100 AS utilization_pct
-    FROM MFG_SCHEDULING_REPORTING.RAW.DAILY_PRODUCTION_METRICS
-    WHERE PLANT_ID = 'DET01'
+    FROM {SCHEMA_RAW}.DAILY_PRODUCTION_METRICS
+    WHERE PLANT_ID = :1
       AND PRODUCTION_DATE >= DATEADD(day, -7, CURRENT_DATE())
     GROUP BY LINE_NAME
-""")
+    """,
+    params=[PLANT_ID],
+)
 
 # --- KPI Row ---
 latest_week = oee_df[oee_df["DATE"] >= oee_df["DATE"].max() - np.timedelta64(6, "D")]
