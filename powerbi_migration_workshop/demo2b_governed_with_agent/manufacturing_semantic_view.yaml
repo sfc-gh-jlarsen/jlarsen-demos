@@ -1,9 +1,12 @@
-name: manufacturing_operations
+name: MANUFACTURING_OPERATIONS
 description: "Governed metrics for manufacturing plant performance — replaces fragmented PowerBI semantic models with a single source of truth."
 
 tables:
   - name: daily_production_metrics
-    base_table: MFG_SCHEDULING_REPORTING.ANALYTICS.DAILY_PRODUCTION_METRICS
+    base_table:
+      database: MFG_SCHEDULING_REPORTING
+      schema: ANALYTICS
+      table: DAILY_PRODUCTION_METRICS
     description: "Daily production metrics aggregated by line, plant, and shift"
     dimensions:
       - name: plant_id
@@ -25,7 +28,7 @@ tables:
       - name: production_date
         expr: PRODUCTION_DATE
         description: "Date of production"
-    measures:
+    metrics:
       - name: oee
         expr: "AVG(AVAILABILITY_PCT * PERFORMANCE_PCT * QUALITY_PCT)"
         description: "Overall Equipment Effectiveness = Availability x Performance x Quality"
@@ -38,9 +41,6 @@ tables:
       - name: quality
         expr: "AVG(QUALITY_PCT)"
         description: "First-pass quality yield percentage"
-      - name: on_time_delivery_pct
-        expr: "COUNT_IF(ACTUAL_SHIP_DATE <= PROMISE_DATE) / NULLIF(COUNT(*), 0) * 100"
-        description: "Percentage of orders shipped on or before promise date"
       - name: throughput
         expr: "SUM(GOOD_UNITS_PRODUCED)"
         description: "Total good units produced"
@@ -52,7 +52,10 @@ tables:
         description: "Total unplanned downtime in minutes"
 
   - name: work_orders
-    base_table: MFG_SCHEDULING_REPORTING.RAW.WORK_ORDERS
+    base_table:
+      database: MFG_SCHEDULING_REPORTING
+      schema: RAW
+      table: WORK_ORDERS
     description: "Production work orders with scheduling and material status"
     dimensions:
       - name: wo_id
@@ -74,7 +77,7 @@ tables:
       - name: due_date
         expr: DUE_DATE
         description: "Work order due date"
-    measures:
+    metrics:
       - name: order_count
         expr: "COUNT(*)"
         description: "Number of work orders"
@@ -86,7 +89,10 @@ tables:
         description: "Orders at risk due to status or material shortage"
 
   - name: issues
-    base_table: MFG_SCHEDULING_REPORTING.RAW.ISSUES
+    base_table:
+      database: MFG_SCHEDULING_REPORTING
+      schema: RAW
+      table: ISSUES
     description: "Production issues and incidents"
     dimensions:
       - name: issue_id
@@ -108,7 +114,7 @@ tables:
       - name: created_at
         expr: CREATED_AT
         description: "When the issue was reported"
-    measures:
+    metrics:
       - name: open_issue_count
         expr: "COUNT_IF(STATUS = 'Open')"
         description: "Number of currently open issues"
