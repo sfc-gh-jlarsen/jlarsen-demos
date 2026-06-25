@@ -1,15 +1,23 @@
 definition_version: "2"
 
 entities:
-  spcs-ops-guide:
+  SPCS_OPS_GUIDE:
     type: snowflake-app
     identifier:
       name: SPCS_OPS_GUIDE
+      database: USER$JLARSEN
+      schema: PUBLIC
     artifacts:
       - src: ./*
         dest: ./
         ignore:
           - node_modules
+          - .env*
+          - __pycache__
+          - "*.pyc"
           - .next
           - .git
+          - snowflake.log
+
     query_warehouse: COMPUTE_WH
+    code_workspace: USER$JLARSEN.PUBLIC.SNOWFLAKE_APPS

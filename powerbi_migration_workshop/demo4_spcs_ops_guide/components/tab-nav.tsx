@@ -15,7 +15,7 @@ const TABS = [
   { id: "runtime", label: "Container vs Warehouse" },
 ]
 
-export function TabNav({ spcsUsage }: { spcsUsage: any[] }) {
+export function TabNav() {
   const [active, setActive] = useState("architecture")
 
   return (
@@ -39,7 +39,7 @@ export function TabNav({ spcsUsage }: { spcsUsage: any[] }) {
         {active === "architecture" && <ArchitectureTab />}
         {active === "scaling" && <ScalingTab />}
         {active === "monitoring" && <MonitoringTab />}
-        {active === "cost" && <CostTab spcsUsage={spcsUsage} />}
+        {active === "cost" && <CostTab />}
         {active === "runtime" && <RuntimeComparisonTab />}
       </div>
     </div>

@@ -9,7 +9,7 @@ const CREDIT_RATES: Record<string, number> = {
   CPU_X64_L: 4.0,
 }
 
-export function CostTab({ spcsUsage }: { spcsUsage: any[] }) {
+export function CostTab() {
   const [family, setFamily] = useState("CPU_X64_S")
   const [nodes, setNodes] = useState(1)
   const [hours, setHours] = useState(10)
@@ -69,31 +69,6 @@ export function CostTab({ spcsUsage }: { spcsUsage: any[] }) {
         </p>
       </div>
 
-      {spcsUsage.length > 0 && (
-        <div>
-          <h3 className="text-lg font-medium mb-2">Recent SPCS Usage (from ACCOUNT_USAGE)</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs border">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-2 text-left">Start Time</th>
-                  <th className="p-2 text-left">End Time</th>
-                  <th className="p-2 text-right">Credits Used</th>
-                </tr>
-              </thead>
-              <tbody>
-                {spcsUsage.slice(0, 10).map((row: any, i: number) => (
-                  <tr key={i} className="border-t">
-                    <td className="p-2">{row.START_TIME}</td>
-                    <td className="p-2">{row.END_TIME}</td>
-                    <td className="p-2 text-right">{row.CREDITS_USED}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
