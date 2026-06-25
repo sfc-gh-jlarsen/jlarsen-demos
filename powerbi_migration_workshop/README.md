@@ -34,20 +34,46 @@ streamlit run demo4_spcs_ops_guide/streamlit_app.py
 ## Full Setup (with Snowflake)
 
 ```bash
-# 1. Run SQL scripts in order
+# 1. Create database and tables
 snowsql -f sql/01_setup_database.sql
 snowsql -f sql/02_create_tables.sql
-snowsql -f sql/03_load_synthetic_data.sql
+
+# 2. Materialize synthetic data into Snowflake
+pip install snowflake-connector-python pandas numpy
+python setup_data.py
+
+# 3. Upload semantic view YAML and create objects
+snow stage copy demo2b_governed_with_agent/manufacturing_semantic_view.yaml \
+    @MFG_SCHEDULING_REPORTING.ANALYTICS.MODELS/ --overwrite
 snowsql -f sql/04_semantic_view.sql
 snowsql -f sql/05_cortex_agent.sql
 snowsql -f sql/06_row_access_policy.sql
 
-# 2. Upload semantic view YAML to stage
-snow stage copy demo2b_governed_with_agent/manufacturing_semantic_view.yaml \
-    @MFG_SCHEDULING_REPORTING.ANALYTICS.MODELS/
-
-# 3. Deploy apps via Streamlit in Snowflake (container runtime)
+# 4. Deploy apps via Streamlit in Snowflake (container runtime)
 ```
+
+## The Demo Narrative
+
+The story arc starts in Snowflake itself — show the data lives here:
+
+```sql
+-- "Here's the production data sitting in Snowflake — same place your ERP lands it."
+SELECT LINE_NAME, AVG(OEE) AS avg_oee, SUM(GOOD_UNITS_PRODUCED) AS throughput
+FROM MFG_SCHEDULING_REPORTING.ANALYTICS.DAILY_PRODUCTION_METRICS
+WHERE PLANT_ID = 'DET01' AND PRODUCTION_DATE >= DATEADD(week, -1, CURRENT_DATE())
+GROUP BY LINE_NAME
+ORDER BY avg_oee;
+
+-- "Great, I can see CNC Machining is underperforming. But now I need to
+--  visualize this, drill into it, share it with my team. In the old world,
+--  I'd open PowerBI Desktop and start building a .pbix file..."
+--
+-- "Watch what happens instead."
+```
+
+Then open Demo 1 (workspace app) — the ad-hoc replacement. The transition is:
+*"I queried the data. I need a visual. Instead of exporting to PowerBI, I build
+it right here — in a workspace, private to me, zero deployment."*
 
 ## Demo Structure
 
@@ -65,7 +91,9 @@ snow stage copy demo2b_governed_with_agent/manufacturing_semantic_view.yaml \
 > "You've got PowerBI sprawl. Dozens of reports, fragmented DAX logic, RLS defined per model. Every time an analyst needs to 'quickly check something,' they create a new .pbix file that lives forever. Today I'm going to show you how Snowflake eliminates all three problems."
 
 ### Demo 1 — The Ad-Hoc Replacement (10 min)
-> Show workspace app. Emphasize: private, ephemeral, no deployment needed. Change the date filter live — instant refresh. "When done, close it. No report sprawl."
+> Start in a Snowflake worksheet. Run a quick query showing OEE by line. "See? The data's right here. Now I need to visualize it, filter it interactively, maybe share a screenshot. In the old world, I'd open PowerBI Desktop..."
+>
+> Open workspace app. "Instead, I build it right here. Same data, instant interactivity." Change the date filter live — instant refresh. "This is private to ME. No deployment. When I'm done, I close it. No report sprawl."
 
 ### Demo 2a — Governed Dashboard (8 min)
 > Show deployed multi-page app. OEE, OTD, drill-down. Point out hardcoded SQL with business logic. "Works fine... until someone in Austin defines OEE differently."
