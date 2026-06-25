@@ -1,0 +1,15 @@
+definition_version: "2"
+
+entities:
+  spcs-ops-guide:
+    type: snowflake-app
+    identifier:
+      name: SPCS_OPS_GUIDE
+    artifacts:
+      - src: ./*
+        dest: ./
+        ignore:
+          - node_modules
+          - .next
+          - .git
+    query_warehouse: COMPUTE_WH

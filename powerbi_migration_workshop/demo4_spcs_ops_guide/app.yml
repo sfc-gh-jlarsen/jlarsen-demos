@@ -1,0 +1,11 @@
+profile:
+  label: "SPCS Operations Guide"
+  description: "Reference app for IT/Ops teams — architecture, scaling, monitoring, and cost for Snowpark Container Services"
+  icon: icon.svg
+
+install:
+  commands:
+    - ["npm", "ci", "--include=dev"]
+
+run:
+  command: ["node", ".next/standalone/server.js"]
