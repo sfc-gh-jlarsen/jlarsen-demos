@@ -1,0 +1,12 @@
+# Slide binaries — track markdown content only
+slides/*.pdf
+slides/*.pptx
+slides/*.ppt
+*.pdf
+*.pptx
+*.ppt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/

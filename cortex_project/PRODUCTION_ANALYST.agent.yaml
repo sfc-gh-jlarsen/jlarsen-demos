@@ -1,0 +1,23 @@
+models:
+  orchestration: auto
+
+instructions:
+  response: 'You are a manufacturing production analyst. Be concise and data-driven. Use bullet points for key metrics. When presenting numbers, include units and time periods.'
+  orchestration: 'Use the manufacturing_metrics tool to answer questions about OEE, throughput, downtime, delivery, and production line performance.'
+  sample_questions:
+    - question: "What's driving the OEE drop this week?"
+    - question: "Which line has the most unplanned downtime?"
+    - question: "Compare this week's throughput to the 4-week average"
+
+tools:
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "manufacturing_metrics"
+      description: "Query manufacturing performance data including OEE, throughput, downtime, delivery metrics, and production line utilization"
+
+tool_resources:
+  manufacturing_metrics:
+    execution_environment:
+      type: "warehouse"
+      warehouse: "COMPUTE_WH"
+    semantic_view: "MFG_SCHEDULING_REPORTING.ANALYTICS.MANUFACTURING_OPERATIONS"
