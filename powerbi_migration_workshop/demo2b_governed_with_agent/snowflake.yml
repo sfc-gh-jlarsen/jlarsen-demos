@@ -1,0 +1,21 @@
+definition_version: 2
+entities:
+  streamlit_app:
+    type: streamlit
+    identifier:
+      database: MFG_SCHEDULING_REPORTING
+      schema: PUBLIC
+      name: DEMO2B_GOVERNED_WITH_AGENT
+    title: demo2b_governed_with_agent
+    query_warehouse: COMPUTE_WH
+    compute_pool: STREAMLIT_COMPUTE_POOL
+    run_mode: SpcsOnly
+    execute_as: OWNER
+    main_file: streamlit_app.py
+    external_access_integrations:
+      - PYPI_ACCESS_INTEGRATION
+    artifacts:
+      - pyproject.toml
+      - streamlit_app.py
+      - pages/
+      - .streamlit/config.toml

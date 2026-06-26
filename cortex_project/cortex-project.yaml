@@ -1,0 +1,7 @@
+version: 1
+artifacts:
+  - path: PRODUCTION_ANALYST.agent.yaml
+    type: cortex_agent
+    targets:
+      default:
+        object: MFG_SCHEDULING_REPORTING.ANALYTICS.PRODUCTION_ANALYST
