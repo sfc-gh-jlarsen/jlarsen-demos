@@ -10,6 +10,7 @@ A collection of hands-on demos for Snowflake features and capabilities.
 | [agent_update](./agent_update/) | Safely update agent orchestration instructions without overwriting other fields |
 | [ai_studio_demo](./ai_studio_demo/) | AI Function Studio: enterprise support ticket classification with Cortex AI |
 | [npo_logging_demo](./npo_logging_demo/) | NPO observability: why print() is invisible and how to use Python logging |
+| [powerbi_migration_workshop](./powerbi_migration_workshop/) | 60-min workshop: Snowflake replacing PowerBI with SiS, Semantic Views, Cortex Agent, and App Runtime |
 
 ## License
 

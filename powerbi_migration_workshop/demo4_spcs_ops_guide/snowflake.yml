@@ -5,7 +5,7 @@ entities:
     type: snowflake-app
     identifier:
       name: SPCS_OPS_GUIDE
-      database: USER$JLARSEN
+      # database: USER$<YOUR_USERNAME>  # Set by snow app setup
       schema: PUBLIC
     artifacts:
       - src: ./*
@@ -20,4 +20,4 @@ entities:
           - snowflake.log
 
     query_warehouse: COMPUTE_WH
-    code_workspace: USER$JLARSEN.PUBLIC.SNOWFLAKE_APPS
+    # code_workspace: USER$<YOUR_USERNAME>.PUBLIC.SNOWFLAKE_APPS  # Set by snow app setup
