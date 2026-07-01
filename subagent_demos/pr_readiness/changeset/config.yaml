@@ -1,0 +1,23 @@
+# NOTE: DEMO FILE — all credentials and URLs are fake/example values.
+# Anomaly Alert Service Configuration
+
+service:
+  name: warehouse-cost-monitor
+  version: 1.2.0
+  environment: production
+
+snowflake:
+  account: myorg-myaccount
+  user: svc_monitor
+  password: Monitor2024!
+  warehouse: COMPUTE_WH
+  role: MONITOR_ROLE
+
+alerting:
+  webhook_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXX
+  threshold_multiplier: 2.0
+  lookback_days: 30
+
+schedule:
+  cron: "0 */6 * * *"
+  timezone: America/Denver

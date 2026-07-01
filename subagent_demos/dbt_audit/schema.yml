@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_orders
+    # Missing: description
+    columns:
+      - name: order_id
+        # Missing: not_null and unique tests
+      - name: customer_id
+      - name: order_date
+      - name: status
+
+  - name: fct_revenue
+    description: "Revenue fact table"
+    # Missing: grain definition, no unique test on composite key
+    columns:
+      - name: order_id
+      - name: customer_id
+      - name: order_date
+      - name: product_name
+      - name: category
+        # Missing: accepted_values test
+      - name: quantity
+      - name: unit_price
+      - name: line_total
+      - name: discount_pct
+      - name: net_revenue
+        # Missing: not_null test — this is the key metric
