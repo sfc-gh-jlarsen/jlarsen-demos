@@ -6,6 +6,7 @@ A collection of hands-on demos for Snowflake features and capabilities.
 
 | Demo | Description |
 |------|-------------|
+| [analyst-skills](./analyst-skills/) | Power User Skill Demo: SAP ERP + Salesforce CRM integration with CoCo custom skills, CHECK constraints, and DML Error Logging |
 | [agent_evaluation](./agent_evaluation/) | Evaluate and compare agent performance using Cortex Agent Evaluations |
 | [agent_update](./agent_update/) | Safely update agent orchestration instructions without overwriting other fields |
 | [ai_studio_demo](./ai_studio_demo/) | AI Function Studio: enterprise support ticket classification with Cortex AI |

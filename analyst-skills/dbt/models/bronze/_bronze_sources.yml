@@ -1,0 +1,30 @@
+version: 2
+
+sources:
+  - name: sap
+    database: POWER_USER_SKILL_DEMO
+    schema: BRONZE
+    tables:
+      - name: SAP_KNA1
+        description: "SAP Customer Master (KUNNR=Customer Number, NAME1=Name, LAND1=Country Key, BRSCH=Industry Sector)"
+      - name: SAP_T005T
+        description: "SAP Country Text Table (LAND1=Country Key, LANDX=Country Name, SPRAS=Language Key)"
+      - name: SAP_T001
+        description: "SAP Company Code Table (BUKRS=Company Code, BUTXT=Company Name, WAERS=Currency)"
+      - name: SAP_MARA
+        description: "SAP Material Master (MATNR=Material Number, MAKTX=Description, MTART=Material Type)"
+      - name: SAP_VBAK
+        description: "SAP Sales Order Header (VBELN=Order Number, KUNNR=Customer, NETWR=Net Value)"
+      - name: SAP_VBAP
+        description: "SAP Sales Order Item (VBELN=Order, POSNR=Item, MATNR=Material, KWMENG=Quantity)"
+
+  - name: salesforce
+    database: POWER_USER_SKILL_DEMO
+    schema: BRONZE
+    tables:
+      - name: SFDC_ACCOUNT
+        description: "Salesforce Account with SAP_ACCOUNT_ID__C custom field for cross-system linking"
+      - name: SFDC_OPPORTUNITY
+        description: "Salesforce Opportunity - pipeline and closed deals"
+      - name: SFDC_CONTACT
+        description: "Salesforce Contact - key stakeholders per account"

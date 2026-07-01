@@ -1,0 +1,12 @@
+name: 'power_user_skill_demo_dbt'
+version: '1.0.0'
+
+profile: 'power_user_skill_demo'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"

@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: customer_360
+    description: "Unified customer view combining SAP order history with Salesforce pipeline data"
+    columns:
+      - name: customer_number
+        tests:
+          - not_null
+          - unique
+      - name: engagement_status
+        tests:
+          - accepted_values:
+              values: ['Active - Both Systems', 'Active - SAP Only', 'Active - SFDC Only', 'Inactive']
+
+  - name: revenue_summary
+    description: "Monthly revenue reconciliation across SAP orders and Salesforce closed deals"
+    columns:
+      - name: revenue_month
+        tests:
+          - not_null

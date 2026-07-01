@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: customer_master
+    description: "Unified customer master combining SAP KNA1 with country/company lookups and Salesforce account data"
+    columns:
+      - name: customer_number
+        description: "SAP customer number (KUNNR)"
+        tests:
+          - not_null
+          - unique
+      - name: country_name
+        description: "Resolved country name from SAP T005T lookup"
+      - name: is_linked_to_salesforce
+        description: "Whether this SAP customer has a matching Salesforce account"
+
+  - name: order_lines_enriched
+    description: "SAP order lines with material descriptions and human-readable field names"
+    columns:
+      - name: order_number
+        description: "SAP sales order number (VBELN)"
+        tests:
+          - not_null
+      - name: material_description
+        description: "Human-readable material name from MARA lookup"
+      - name: line_total
+        description: "Calculated: order_quantity * unit_price"
+
+  - name: opportunity_enriched
+    description: "Salesforce opportunities enriched with account details and primary contact"
+    columns:
+      - name: opportunity_id
+        description: "Salesforce opportunity ID"
+        tests:
+          - not_null
+          - unique
+      - name: sap_customer_number
+        description: "SAP customer number from custom field SAP_ACCOUNT_ID__C"

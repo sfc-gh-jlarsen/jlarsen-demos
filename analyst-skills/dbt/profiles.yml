@@ -1,0 +1,8 @@
+power_user_skill_demo:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      database: POWER_USER_SKILL_DEMO
+      schema: DBT_PROJECT
+      role: ACCOUNTADMIN
